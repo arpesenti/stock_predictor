@@ -3,6 +3,7 @@ import datetime
 from sklearn.linear_model import LinearRegression
 import os
 import pandas as pd
+import numpy as np
 
 
 class DataSource:
@@ -41,6 +42,12 @@ class Learner:
     def predict(self, X):
         raise NotImplementedError()
 
+    def rmse(self, predictions, targets):
+        return np.sqrt(((predictions - targets) ** 2).mean())
+
+    def score(self, X, y):
+        return float(self.rmse(self.predict(X), y))
+
 class LinearRegressionLearner(Learner):
     def __init__(self):
         self.model = LinearRegression()
@@ -51,10 +58,12 @@ class LinearRegressionLearner(Learner):
     def predict(self, X):
         return self.model.predict(X)
 
+
 if __name__ == "__main__":
     start_date = datetime.datetime.strptime('01012015', "%d%m%Y").date()
     end_date = datetime.datetime.strptime('31122015', "%d%m%Y").date()
     X, y = DataSource.get_data(start_date, end_date, "AAPL")
+
     linear_regression_learner = LinearRegressionLearner()
     linear_regression_learner.train(X, y)
-    print(linear_regression_learner.predict(X))
+    print('In-sample error: ', linear_regression_learner.score(X, y))
