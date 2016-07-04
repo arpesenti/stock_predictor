@@ -1,6 +1,7 @@
 import quandl
 import datetime
 from sklearn.linear_model import LinearRegression
+from sklearn.neighbors import KNeighborsRegressor
 import os
 import pandas as pd
 import numpy as np
@@ -32,6 +33,7 @@ class DataSource:
             print("Stock not found. Please specify a valid ticker")
             return None
 
+
 class Learner:
     def __init__(self):
         raise NotImplementedError()
@@ -48,14 +50,45 @@ class Learner:
     def score(self, X, y):
         return float(self.rmse(self.predict(X), y))
 
+    @classmethod
+    def cross_validation_score(cls, X, y, k=10):
+        mean = 0
+        n = int(len(y)/k)
+        for i in range(1, k):
+            X_train = X[:][:i*n]
+            y_train = y[:][:i*n]
+            X_test = X[:][i*n:(i+1)*n]
+            y_test = y[:][i*n:(i+1)*n]
+            model = cls()
+            model.train(X_train, y_train)
+            mean += model.score(X_test, y_test)
+        return mean/(k-1)
+
+
+
 class LinearRegressionLearner(Learner):
     def __init__(self):
         self.model = LinearRegression()
 
     def train(self, X, y):
+        # TODO normalise
         self.model.fit(X, y)
 
     def predict(self, X):
+        # TODO normalise
+        return self.model.predict(X)
+
+
+class KNNLearner(Learner):
+    def __init__(self, k=5):
+        self.model = KNeighborsRegressor(n_neighbors=k)
+
+    def train(self, X, y):
+        # TODO normalise
+        self.model.fit(X, y)
+
+    def predict(self, X):
+        # TODO normalise
         return self.model.predict(X)
 
 
@@ -64,6 +97,14 @@ if __name__ == "__main__":
     end_date = datetime.datetime.strptime('31122015', "%d%m%Y").date()
     X, y = DataSource.get_data(start_date, end_date, "AAPL")
 
+    # linear regression
     linear_regression_learner = LinearRegressionLearner()
     linear_regression_learner.train(X, y)
-    print('In-sample error: ', linear_regression_learner.score(X, y))
+    print('Linear Regression in-sample error: ', linear_regression_learner.score(X, y))
+    print('Linear Regression out-sample error: ', LinearRegressionLearner.cross_validation_score(X, y))
+
+    # KNN
+    knn_learner = KNNLearner(k=5)
+    knn_learner.train(X, y)
+    print('KNN in-sample error: ', knn_learner.score(X, y))
+    print('KNN out-sample error: ', KNNLearner.cross_validation_score(X, y))
