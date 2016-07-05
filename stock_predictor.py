@@ -2,6 +2,8 @@ import quandl
 import datetime
 from sklearn.linear_model import LinearRegression
 from sklearn.neighbors import KNeighborsRegressor
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import MinMaxScaler
 import os
 import pandas as pd
 import numpy as np
@@ -68,27 +70,23 @@ class Learner:
 
 class LinearRegressionLearner(Learner):
     def __init__(self):
-        self.model = LinearRegression()
+        self.model = Pipeline(steps=[('features_scaling', MinMaxScaler()), ('linear_regression', LinearRegression())])
 
     def train(self, X, y):
-        # TODO normalise
         self.model.fit(X, y)
 
     def predict(self, X):
-        # TODO normalise
         return self.model.predict(X)
 
 
 class KNNLearner(Learner):
     def __init__(self, k=5):
-        self.model = KNeighborsRegressor(n_neighbors=k)
+        self.model = Pipeline(steps=[('features_scaling', MinMaxScaler()), ('knn', KNeighborsRegressor(n_neighbors=k))])
 
     def train(self, X, y):
-        # TODO normalise
         self.model.fit(X, y)
 
     def predict(self, X):
-        # TODO normalise
         return self.model.predict(X)
 
 
